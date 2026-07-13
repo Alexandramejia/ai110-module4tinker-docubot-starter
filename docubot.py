@@ -65,6 +65,25 @@ class DocuBot:
         """
         index = {}
         # TODO: implement simple indexing
+        for filename, text in documents:
+            for raw_word in text.split():
+                # read the word one character at a time, lowercasing
+                # uppercase letters and dropping punctuation as we go
+                chars = []
+                for char in raw_word:
+                    code = ord(char)
+                    if 65 <= code <= 90:  # 'A'-'Z'
+                        char = chr(code + 32)
+                    if char.isalnum():
+                        chars.append(char)
+                token = "".join(chars)
+
+                if not token:
+                    continue
+                if token not in index:
+                    index[token] = []
+                if filename not in index[token]:
+                    index[token].append(filename)
         return index
 
     # -----------------------------------------------------------
@@ -82,7 +101,24 @@ class DocuBot:
         - Return the count as the score
         """
         # TODO: implement scoring
-        return 0
+        score = 0
+        text_lower = text.lower()
+        for raw_word in query.split():
+            # lowercase the query word one character at a time, same
+            # as build_index, so tokens line up with what's in text
+            chars = []
+            for char in raw_word:
+                code = ord(char)
+                if 65 <= code <= 90:  # 'A'-'Z'
+                    char = chr(code + 32)
+                if char.isalnum():
+                    chars.append(char)
+            word = "".join(chars)
+
+            if not word:
+                continue
+            score += text_lower.count(word)
+        return score
 
     def retrieve(self, query, top_k=3):
         """
@@ -93,6 +129,32 @@ class DocuBot:
         """
         results = []
         # TODO: implement retrieval logic
+        candidate_filenames = set()
+        for raw_word in query.split():
+            # lowercase the query word one character at a time so it
+            # matches the tokens stored in self.index by build_index
+            chars = []
+            for char in raw_word:
+                code = ord(char)
+                if 65 <= code <= 90:  # 'A'-'Z'
+                    char = chr(code + 32)
+                if char.isalnum():
+                    chars.append(char)
+            word = "".join(chars)
+
+            if word in self.index:
+                candidate_filenames.update(self.index[word])
+
+        scored = []
+        for filename, text in self.documents:
+            if candidate_filenames and filename not in candidate_filenames:
+                continue
+            score = self.score_document(query, text)
+            if score > 0:
+                scored.append((score, filename, text))
+
+        scored.sort(key=lambda item: item[0], reverse=True)
+        results = [(filename, text) for _, filename, text in scored]
         return results[:top_k]
 
     # -----------------------------------------------------------
