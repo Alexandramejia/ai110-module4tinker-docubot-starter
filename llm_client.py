@@ -17,7 +17,8 @@ from google import genai
 
 # Central place to update the model name if needed.
 # You can swap this for a different Gemini model in the future.
-GEMINI_MODEL_NAME = "gemma-3-27b-it"
+# Updated Gemini model to correct status so it's able to be used.
+GEMINI_MODEL_NAME = "gemini-flash-latest"
 
 
 class GeminiClient:
